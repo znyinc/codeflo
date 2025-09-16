@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt JSON Formatter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .format-selector {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .format-selector label {
+            font-weight: 600;
+            color: #333;
+            margin-right: 15px;
+        }
+
+        .format-selector select {
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .format-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .input-section, .output-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        textarea, .json-output {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .json-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .examples {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f1f3f4;
+            border-radius: 15px;
+        }
+
+        .examples h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .example-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .example-item:hover {
+            background: #e9ecef;
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .example-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Prompt JSON Formatter</h1>
+        <p class="subtitle">Convert natural language prompts into structured JSON for AI systems</p>
+        
+        <div class="format-selector">
+            <label for="formatSelect">Output Format:</label>
+            <select id="formatSelect">
+                <option value="openai">OpenAI API Format</option>
+                <option value="claude">Claude API Format</option>
+                <option value="generic">Generic Format</option>
+                <option value="custom">Custom Structure</option>
+            </select>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="section-title">
+                    📝 Natural Language Input
+                </div>
+                <textarea id="promptInput" placeholder="Enter your natural language prompt here...
+
+Example: 'Please analyze the provided text for sentiment and extract key themes. Focus on emotional tone and provide a confidence score for each theme identified.'"></textarea>
+            </div>
+
+            <div class="output-section">
+                <div class="section-title">
+                    🔧 JSON Output
+                </div>
+                <div id="jsonOutput" class="json-output">// Your formatted JSON will appear here</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="formatPrompt()">
+                ⚡ Generate JSON
+            </button>
+            <button class="btn-success" onclick="copyJSON()">
+                📋 Copy JSON
+            </button>
+            <button class="btn-secondary" onclick="clearAll()">
+                🗑️ Clear All
+            </button>
+        </div>
+
+        <div class="examples">
+            <h3>💡 Quick Examples (Click to Use)</h3>
+            <div class="example-item" onclick="loadExample(0)">
+                <div class="example-title">Code Review Request</div>
+                <div class="example-text">Analyze code for bugs, performance issues, and best practices</div>
+            </div>
+            <div class="example-item" onclick="loadExample(1)">
+                <div class="example-title">Content Generation</div>
+                <div class="example-text">Create marketing copy with specific tone and target audience</div>
+            </div>
+            <div class="example-item" onclick="loadExample(2)">
+                <div class="example-title">Data Analysis</div>
+                <div class="example-text">Analyze dataset and provide insights with visualizations</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const examples = [
+            "Review this Python code for potential bugs, performance issues, and adherence to best practices. Provide specific suggestions for improvement and rate the overall code quality on a scale of 1-10.",
+            "Create compelling marketing copy for a new eco-friendly water bottle. Target audience is environmentally conscious millennials. Tone should be enthusiastic but not pushy. Include a call-to-action.",
+            "Analyze the provided sales data CSV file. Identify trends, seasonal patterns, and anomalies. Create visualizations to support your findings and provide actionable business insights."
+        ];
+
+        const formatTemplates = {
+            openai: {
+                model: "gpt-4",
+                messages: [],
+                max_tokens: 1000,
+                temperature: 0.7
+            },
+            claude: {
+                model: "claude-3-sonnet-20240229",
+                max_tokens: 1000,
+                messages: []
+            },
+            generic: {
+                prompt: "",
+                instructions: [],
+                parameters: {
+                    max_length: 1000,
+                    temperature: 0.7,
+                    format: "text"
+                }
+            },
+            custom: {
+                task: "",
+                context: "",
+                requirements: [],
+                output_format: "",
+                constraints: []
+            }
+        };
+
+        function extractInstructions(text) {
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            return sentences.map(s => s.trim()).filter(s => s.length > 10);
+        }
+
+        function extractKeywords(text) {
+            const words = text.toLowerCase().split(/\s+/);
+            const stopWords = ['the', 'is', 'are', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'this', 'that', 'a', 'an'];
+            return words.filter(word => word.length > 3 && !stopWords.includes(word));
+        }
+
+        function analyzePrompt(text) {
+            const analysis = {
+                task_type: 'general',
+                complexity: 'medium',
+                domain: 'general',
+                requires_context: false,
+                output_format: 'text'
+            };
+
+            const lowerText = text.toLowerCase();
+            
+            if (lowerText.includes('code') || lowerText.includes('program') || lowerText.includes('debug')) {
+                analysis.task_type = 'code_analysis';
+                analysis.domain = 'programming';
+            } else if (lowerText.includes('analyze') || lowerText.includes('data') || lowerText.includes('report')) {
+                analysis.task_type = 'analysis';
+                analysis.complexity = 'high';
+            } else if (lowerText.includes('write') || lowerText.includes('create') || lowerText.includes('generate')) {
+                analysis.task_type = 'generation';
+            }
+
+            if (lowerText.includes('json') || lowerText.includes('structured')) {
+                analysis.output_format = 'json';
+            } else if (lowerText.includes('list') || lowerText.includes('bullet')) {
+                analysis.output_format = 'list';
+            }
+
+            if (lowerText.includes('provided') || lowerText.includes('attached') || lowerText.includes('given')) {
+                analysis.requires_context = true;
+            }
+
+            return analysis;
+        }
+
+        function formatPrompt() {
+            const input = document.getElementById('promptInput').value.trim();
+            const format = document.getElementById('formatSelect').value;
+            
+            if (!input) {
+                showToast('Please enter a prompt first!', 'error');
+                return;
+            }
+
+            const analysis = analyzePrompt(input);
+            const instructions = extractInstructions(input);
+            let formatted = JSON.parse(JSON.stringify(formatTemplates[format]));
+
+            switch (format) {
+                case 'openai':
+                    formatted.messages = [
+                        {
+                            role: "system",
+                            content: "You are a helpful AI assistant. Follow the user's instructions carefully and provide accurate responses."
+                        },
+                        {
+                            role: "user",
+                            content: input
+                        }
+                    ];
+                    break;
+
+                case 'claude':
+                    formatted.messages = [
+                        {
+                            role: "user",
+                            content: input
+                        }
+                    ];
+                    break;
+
+                case 'generic':
+                    formatted.prompt = input;
+                    formatted.instructions = instructions;
+                    formatted.parameters.format = analysis.output_format;
+                    formatted.task_analysis = analysis;
+                    break;
+
+                case 'custom':
+                    const mainTask = instructions[0] || input.substring(0, 100) + '...';
+                    formatted.task = mainTask;
+                    formatted.context = analysis.requires_context ? "User will provide additional context or data" : "No additional context required";
+                    formatted.requirements = instructions;
+                    formatted.output_format = analysis.output_format;
+                    formatted.constraints = [
+                        "Maintain accuracy and relevance",
+                        "Follow ethical guidelines",
+                        "Provide clear and actionable responses"
+                    ];
+                    formatted.metadata = {
+                        complexity: analysis.complexity,
+                        domain: analysis.domain,
+                        estimated_tokens: Math.min(Math.max(input.length * 2, 100), 2000)
+                    };
+                    break;
+            }
+
+            document.getElementById('jsonOutput').textContent = JSON.stringify(formatted, null, 2);
+            showToast('JSON generated successfully!');
+        }
+
+        function copyJSON() {
+            const output = document.getElementById('jsonOutput').textContent;
+            if (output && output !== '// Your formatted JSON will appear here') {
+                navigator.clipboard.writeText(output).then(() => {
+                    showToast('JSON copied to clipboard!');
+                });
+            } else {
+                showToast('No JSON to copy. Generate JSON first!', 'error');
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('promptInput').value = '';
+            document.getElementById('jsonOutput').textContent = '// Your formatted JSON will appear here';
+            showToast('Cleared all content');
+        }
+
+        function loadExample(index) {
+            document.getElementById('promptInput').value = examples[index];
+            showToast('Example loaded! Click "Generate JSON" to format.');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = type === 'error' ? '#dc3545' : '#28a745';
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Auto-format on input change (debounced)
+        let formatTimeout;
+        document.getElementById('promptInput').addEventListener('input', () => {
+            clearTimeout(formatTimeout);
+            formatTimeout = setTimeout(() => {
+                if (document.getElementById('promptInput').value.trim()) {
+                    formatPrompt();
+                }
+            }, 1000);
+        });
+
+        // Format on dropdown change
+        document.getElementById('formatSelect').addEventListener('change', () => {
+            if (document.getElementById('promptInput').value.trim()) {
+                formatPrompt();
+            }
+        });
+    </script>
+</body>
+</html>
